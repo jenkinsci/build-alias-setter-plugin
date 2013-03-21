@@ -31,6 +31,7 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.PermalinkProjectAction.Permalink;
 import hudson.model.listeners.RunListener;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -38,7 +39,6 @@ import hudson.tasks.BuildWrapperDescriptor;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -77,32 +77,69 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
     private void setAlias(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
         
         final String name = getName(build, listener);
-        
-        // Do nothing when expansion fails
         if (name == null) return;
         
         final AbstractProject<?, ?> project = build.getProject();
         
-        PermalinkStorage storage = project.getProperty(PermalinkStorage.class);
-        if (storage == null) {
-            
-            storage = new PermalinkStorage();
-            project.addProperty(storage);
-        }
+        getStorage(project).addAlias(build.getNumber(), name);
         
-        storage.addAlias(build.getNumber(), name);
         project.save();
     }
     
     private String getName(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
         
+        final String name = expandMacro(build, listener);
+        if (name == null) return null;
+
         try {
+
+            Integer.parseInt(name);
+            logInvalidName(listener, name);
+            return null;
+        } catch (NumberFormatException ex) {/* not an int */}
+
+        for (final Permalink buildin: Permalink.BUILTIN) {
+
+            if (name.equalsIgnoreCase(buildin.getId())) {
+
+                logInvalidName(listener, name);
+                return null;
+            }
+        }
+
+        return name;
+    }
+
+    private void logInvalidName(BuildListener listener, String name) {
+
+        listener.getLogger().println(String.format(
+                "BuildAliasSetter: Unable to use '%s' as a custom build alias.",
+                name
+        ));
+    }
+
+    private String expandMacro(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
+
+        try {
+
             return TokenMacro.expand(build, listener, template);
         } catch (MacroEvaluationException e) {
+
             listener.getLogger().println(e.getMessage());
         }
-        
+
         return null;
+    }
+
+    private PermalinkStorage getStorage(final AbstractProject<?, ?> project) throws IOException {
+
+        PermalinkStorage storage = project.getProperty(PermalinkStorage.class);
+        if (storage != null) {
+
+            storage = new PermalinkStorage();
+            project.addProperty(storage);
+        }
+        return storage;
     }
 
     @Extension

@@ -26,10 +26,10 @@ package org.jenkinsci.plugins.buildaliassetter;
 import hudson.Extension;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
-import hudson.model.Job;
-import hudson.model.PermalinkProjectAction;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor.FormException;
+import hudson.model.Job;
+import hudson.model.PermalinkProjectAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
