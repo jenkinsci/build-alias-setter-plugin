@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2012 Red Hat, Inc.
+ * Copyright (c) 2013 Red Hat, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
         
         setAlias(build, listener);
@@ -67,7 +68,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         };
     }
 
-    private void setAlias(AbstractBuild build, BuildListener listener) throws IOException, InterruptedException {
+    private void setAlias(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
         
         final String name = getName(build, listener);
         
@@ -87,7 +88,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         project.save();
     }
     
-    private String getName(AbstractBuild build, BuildListener listener) throws IOException, InterruptedException {
+    private String getName(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
         
         try {
             return TokenMacro.expand(build, listener, template);

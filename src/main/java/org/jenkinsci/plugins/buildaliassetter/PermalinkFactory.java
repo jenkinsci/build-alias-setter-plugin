@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2012 Red Hat, Inc.
+ * Copyright (c) 2013 Red Hat, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,9 +36,10 @@ import java.util.Collections;
 public class PermalinkFactory extends TransientProjectActionFactory {
 
     @Override
+    @SuppressWarnings("rawtypes")
     public Collection<? extends Action> createFor(AbstractProject target) {
         
-        final PermalinkStorage storage = (PermalinkStorage) target
+        final PermalinkStorage storage = ((AbstractProject<?, ?>)target)
                 .getProperty(PermalinkStorage.class)
         ;
         
