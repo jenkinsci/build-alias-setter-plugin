@@ -28,11 +28,15 @@ import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Job;
 import hudson.model.PermalinkProjectAction;
+import hudson.model.Descriptor.FormException;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * List of {@link Alias}es attached to particular {@link Job}
@@ -72,7 +76,14 @@ public class PermalinkStorage extends JobProperty<Job<?,?>> implements Permalink
     public String getUrlName() {
         return null;
     }
-            
+
+    @Override
+    public JobProperty<?> reconfigure(StaplerRequest req, JSONObject form) throws FormException {
+
+        // Do not reconfigure
+        return this;
+    }
+
     @Extension
     public static class DescriptorImpl extends JobPropertyDescriptor {
 
