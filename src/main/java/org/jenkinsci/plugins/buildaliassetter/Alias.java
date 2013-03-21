@@ -32,7 +32,7 @@ import hudson.model.PermalinkProjectAction.Permalink;
  * 
  * @author ogondza
  */
-public class Alias extends Permalink {
+/*package*/ class Alias extends Permalink {
     
     private final String name;
     private final int buildNumber;

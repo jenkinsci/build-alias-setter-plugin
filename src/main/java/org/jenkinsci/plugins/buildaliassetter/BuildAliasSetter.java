@@ -31,15 +31,21 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.listeners.RunListener;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+/**
+ * @author ogondza
+ */
 public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable {
 
     public final String template;
@@ -97,6 +103,34 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         }
         
         return null;
+    }
+
+    @Extension
+    public static class DanglingAliasDeleter extends RunListener<AbstractBuild<?, ?>> {
+
+        private final static Logger LOGGER = Logger.getLogger(BuildAliasSetter.class.getName());
+
+        /**
+         * Delete aliases for builds that does not longer exists
+         */
+        @Override
+        public void onDeleted(final AbstractBuild<?, ?> build) {
+
+            final AbstractProject<?, ?> project = build.getProject();
+            final PermalinkStorage storage = project.getProperty(PermalinkStorage.class);
+
+            if (storage == null) return;
+
+            storage.deleteAliases(build);
+            try {
+
+                project.save();
+            } catch (IOException ex) {
+
+                final String msg = "Unable to save project after deleting dangling aliases for job " + build.getDisplayName();
+                LOGGER.log(Level.SEVERE, msg, ex);
+            }
+        }
     }
     
     @Extension

@@ -28,10 +28,13 @@ import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.model.Job;
 import hudson.model.PermalinkProjectAction;
+import hudson.model.AbstractBuild;
 import hudson.model.Descriptor.FormException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.json.JSONObject;
 
@@ -45,24 +48,29 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class PermalinkStorage extends JobProperty<Job<?,?>> implements PermalinkProjectAction {
     
-    private final List<Alias> permalinks;
+    private final Map<Integer, Alias> permalinks;
     
     @DataBoundConstructor
     public PermalinkStorage() {
 
-        permalinks = new ArrayList<Alias>();
+        permalinks = new HashMap<Integer, Alias>();
     }
     
     public List<Permalink> getPermalinks() {
      
         final List<Permalink> links = new ArrayList<Permalink>(permalinks.size());
-        links.addAll(permalinks);
+        links.addAll(permalinks.values());
         return links;
     }
     
-    public void addAlias(final int buildNumber, final String name) {
+    /*package*/ void addAlias(final int buildNumber, final String name) {
         
-        permalinks.add(new Alias(buildNumber, name));
+        permalinks.put(buildNumber, new Alias(buildNumber, name));
+    }
+
+    /*package*/ void deleteAliases(final AbstractBuild<?, ?> build) {
+
+        permalinks.remove(build.getNumber());
     }
 
     public String getIconFileName() {
