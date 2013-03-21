@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>1.399</version>
+  </parent>
+
+  <groupId>org.jenkins-ci.plugins</groupId>
+  <artifactId>build-alias-setter</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>hpi</packaging>
+  <name>Build Alias Setter Plugin</name>
+
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/Build+Alias+Setter+Plugin</url>
+  
+  <developers>
+    <developer>
+      <id>olivergondza</id>
+      <name>Oliver Gondža</name>
+      <email>ogondza@gmail.org</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/jenkinsci/artifact-diff-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/artifact-diff-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/artifact-diff-plugin</url>
+  </scm>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>token-macro</artifactId>
+      <version>1.0</version>
+    </dependency>
+  </dependencies>
+  
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+</project>  
+
