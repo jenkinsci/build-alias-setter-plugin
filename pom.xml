@@ -7,7 +7,7 @@
   </parent>
 
   <groupId>org.jenkins-ci.plugins</groupId>
-  <artifactId>build-alias-Setter</artifactId>
+  <artifactId>build-alias-setter</artifactId>
   <version>0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Build Alias Setter Plugin</name>
@@ -23,9 +23,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/build-alias-setter.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/build-alias-setter.git</developerConnection>
-    <url>https://github.com/jenkinsci/build-alias-setter</url>
+    <connection>scm:git:git://github.com/jenkinsci/build-alias-setter-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/build-alias-setter-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/build-alias-setter-plugin</url>
   </scm>
 
   <dependencies>
