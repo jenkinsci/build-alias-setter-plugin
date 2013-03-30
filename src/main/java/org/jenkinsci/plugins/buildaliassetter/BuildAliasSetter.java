@@ -117,7 +117,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
 
         final AbstractProject<?, ?> project = build.getProject();
 
-        getStorage(project).addAliases(build.getNumber(), aliases);
+        getStorage(project).addAliases(build, aliases);
 
         project.save();
     }

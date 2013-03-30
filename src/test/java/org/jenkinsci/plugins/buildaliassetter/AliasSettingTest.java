@@ -88,7 +88,7 @@ public class AliasSettingTest {
 
     private void thenAttached(final String... aliases) throws IOException {
 
-        Mockito.verify(storage).addAliases(42, new LinkedHashSet<String>(Arrays.asList(aliases)));
+        Mockito.verify(storage).addAliases(build, new LinkedHashSet<String>(Arrays.asList(aliases)));
         Mockito.verify(project).save();
 
         Mockito.verifyNoMoreInteractions(storage);

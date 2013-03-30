@@ -43,45 +43,48 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * List of {@link Alias}es attached to particular {@link Job}
+ * List of {@link Alias}es attached to a particular {@link Job}
  *
  * @author ogondza
  */
 public class PermalinkStorage extends JobProperty<Job<?,?>> implements PermalinkProjectAction {
 
-    private final Map<Integer, LinkedHashSet<Alias>> permalinks;
+    private final Map<Integer, LinkedHashSet<String>> permalinks;
 
     @DataBoundConstructor
     public PermalinkStorage() {
 
-        permalinks = new HashMap<Integer, LinkedHashSet<Alias>>();
+        permalinks = new HashMap<Integer, LinkedHashSet<String>>();
     }
 
     public List<Permalink> getPermalinks() {
 
         final List<Permalink> links = new ArrayList<Permalink>(permalinks.size());
-        for (final LinkedHashSet<Alias> aliases: permalinks.values()) {
+        for (final Map.Entry<Integer, LinkedHashSet<String>> entry: permalinks.entrySet()) {
 
-            links.addAll(aliases);
+            final LinkedHashSet<String> aliases = entry.getValue();
+            final int buildNumber = entry.getKey();
+            for (final String alias: aliases) {
+
+                final Alias newAlias = new Alias(buildNumber, alias);
+                links.add(newAlias);
+            }
         }
 
         return links;
     }
 
-    /*package*/ void addAliases(final int buildNumber, final LinkedHashSet<String> aliases) {
+    /*package*/ void addAliases(final AbstractBuild<?, ?> build, final LinkedHashSet<String> aliases) {
 
-        LinkedHashSet<Alias> bucket = permalinks.get(buildNumber);
+        final int buildNumber = build.getNumber();
+
+        LinkedHashSet<String> bucket = permalinks.get(buildNumber);
         if (bucket == null) {
-            bucket = new LinkedHashSet<Alias>(aliases.size());
+            bucket = new LinkedHashSet<String>(aliases.size());
             permalinks.put(buildNumber, bucket);
         }
 
-        for (final String alias: aliases) {
-
-            final Alias newAlias = new Alias(buildNumber, alias);
-            if (bucket.contains(newAlias)) continue;
-            bucket.add(newAlias);
-        }
+        bucket.addAll(aliases);
     }
 
     /*package*/ void deleteAliases(final AbstractBuild<?, ?> build) {

@@ -29,35 +29,59 @@ import hudson.model.PermalinkProjectAction.Permalink;
 
 /**
  * An Alias for a build
- * 
+ *
  * @author ogondza
  */
 /*package*/ class Alias extends Permalink {
-    
+
     private final String name;
     private final int buildNumber;
-    
+
     public Alias(final int buildNumber, final String name) {
-        
+
+        if (name == null) throw new IllegalArgumentException("No name provided");
+
         this.buildNumber = buildNumber;
         this.name = name;
     }
-    
+
     @Override
-    public Run<?, ?> resolve(Job<?, ?> job) {
+    public Run<?, ?> resolve(final Job<?, ?> job) {
 
         return job.getBuildByNumber(buildNumber);
     }
-    
+
     @Override
     public String getId() {
-        
+
         return name;
     }
-    
+
     @Override
     public String getDisplayName() {
-        
+
         return name;
+    }
+
+    @Override
+    public int hashCode() {
+
+        int result = 17;
+        result = 31 * result + buildNumber;
+        result = 31 * result + name.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) return true;
+
+        if (obj == null) return false;
+
+        if (getClass() != obj.getClass()) return false;
+        final Alias other = (Alias) obj;
+
+        return buildNumber == other.buildNumber && name.equals(other.name);
     }
 }
