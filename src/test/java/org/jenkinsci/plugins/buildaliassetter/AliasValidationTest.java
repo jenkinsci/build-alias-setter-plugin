@@ -12,7 +12,7 @@ public class AliasValidationTest {
     @Test
     public void disalowIntegralAlias() {
 
-        final FormValidation validation = BuildAliasSetter.validateAlias("42");
+        final FormValidation validation = AliasProvider.validateAlias("42");
 
         assertThat(validation.getMessage(), containsString("42"));
     }
@@ -20,7 +20,7 @@ public class AliasValidationTest {
     @Test
     public void disallowAliasThatCollidesWithABuildinOne() {
 
-        final FormValidation validation = BuildAliasSetter.validateAlias("lastBuild");
+        final FormValidation validation = AliasProvider.validateAlias("lastBuild");
 
         assertThat(validation.getMessage(), containsString("lastBuild"));
     }
@@ -28,7 +28,7 @@ public class AliasValidationTest {
     @Test
     public void disallowEmptyAliases() {
 
-        final FormValidation validation = BuildAliasSetter.validateAlias("");
+        final FormValidation validation = AliasProvider.validateAlias("");
 
         assertThat(validation.getMessage(), containsString("is empty"));
     }
@@ -36,7 +36,7 @@ public class AliasValidationTest {
     @Test
     public void validateValidAlias() {
 
-        final FormValidation validation = BuildAliasSetter.validateAlias("version-1.480.3-SNAPSHOT");
+        final FormValidation validation = AliasProvider.validateAlias("version-1.480.3-SNAPSHOT");
 
         assertThat(validation, nullValue());
     }

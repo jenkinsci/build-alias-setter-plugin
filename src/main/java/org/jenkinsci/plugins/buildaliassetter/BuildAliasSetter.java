@@ -32,7 +32,6 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
-import hudson.model.PermalinkProjectAction.Permalink;
 import hudson.model.listeners.RunListener;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -51,7 +50,13 @@ import org.jenkinsci.plugins.buildaliassetter.AliasProvider.Descriptor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * Set aliases before and after build execution
+ * Set aliases to the build
+ *
+ * This implementation sets the aliases twice, before and after the run. It is
+ * desirable to set aliases as soon as possible to reach the build before it's
+ * competition. On the other hand some data necessary to get the aliases might
+ * not be available before the build has finished. No alias will be set twice
+ * for the same build.
  *
  * @author ogondza
  */
@@ -150,7 +155,9 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         return storage;
     }
 
-    private LinkedHashSet<String> filterAliases(final LinkedHashSet<String> aliasCandidates, final BuildListener listener) {
+    private LinkedHashSet<String> filterAliases(
+            final LinkedHashSet<String> aliasCandidates, final BuildListener listener
+    ) {
 
         // make sure there is no null
         aliasCandidates.remove(null);
@@ -158,7 +165,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         final LinkedHashSet<String> aliases = new LinkedHashSet<String>(aliasCandidates.size());
         for (final String aliasCandidate: aliasCandidates) {
 
-            final FormValidation validation = validateAlias(aliasCandidate);
+            final FormValidation validation = AliasProvider.validateAlias(aliasCandidate);
             if (validation != null) {
 
                 printToConsole(listener, validation.getMessage());
@@ -169,47 +176,6 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         }
 
         return aliases;
-    }
-
-    /**
-     * Validate custom alias
-     *
-     * Aliases that does not conform to this contract will not be attached to the
-     * build. {@link AliasProvider} implementations might use this method from
-     * their doCheckXXX methods to provide early feedback.
-     *
-     * This implementation ensures that an alias can not possibly collide with
-     * the build number (it must not be an integer) and buildin permalink
-     * ("lastBuild", "lastSuccessfulBuild", etc.).
-     *
-     * @return null if valid, {@link FormValidation} describing the cause otherwise.
-     */
-    public static FormValidation validateAlias(final String aliasCandidate) {
-
-        if (aliasCandidate.isEmpty()) return FormValidation.error(
-                "Custom build alias is empty"
-        );
-
-        try {
-
-            Integer.parseInt(aliasCandidate);
-
-            return FormValidation.error(
-                    "Custom build alias '" + aliasCandidate + "' might collide with build number"
-            );
-        } catch (final NumberFormatException ex) {/* not an int */}
-
-        for (final Permalink buildin: Permalink.BUILTIN) {
-
-            if (aliasCandidate.equalsIgnoreCase(buildin.getId())) {
-
-                return FormValidation.error(
-                        "Custom build alias '" + aliasCandidate + "' collide with buildin permalink"
-                );
-            }
-        }
-
-        return null;
     }
 
     private void printToConsole(final BuildListener listener, final String message) {

@@ -36,6 +36,11 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 
+/**
+ * Provide aliases expanding token macro
+ *
+ * @author ogondza
+ */
 public class TokenMacroAliasProvider extends AliasProvider {
 
     public final String template;
