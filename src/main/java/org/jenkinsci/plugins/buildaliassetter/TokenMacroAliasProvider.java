@@ -28,13 +28,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import net.sf.json.JSONObject;
-
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-
 import hudson.Extension;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
@@ -76,14 +72,6 @@ public class TokenMacroAliasProvider extends AliasProvider {
 
     @Extension
     public static class DescriptorImpl extends AliasProvider.Descriptor {
-
-        @Override
-        public TokenMacroAliasProvider newInstance(
-                final StaplerRequest req, final JSONObject formData
-        ) throws FormException {
-
-            return req.bindJSON(TokenMacroAliasProvider.class, formData);
-        }
 
         @Override
         public String getDisplayName() {

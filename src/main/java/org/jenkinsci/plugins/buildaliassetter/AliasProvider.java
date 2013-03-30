@@ -26,6 +26,10 @@ package org.jenkinsci.plugins.buildaliassetter;
 import java.io.IOException;
 import java.util.List;
 
+import net.sf.json.JSONObject;
+
+import org.kohsuke.stapler.StaplerRequest;
+
 import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
@@ -38,5 +42,11 @@ public abstract class AliasProvider extends AbstractDescribableImpl<AliasProvide
     ) throws IOException, InterruptedException;
 
     public static abstract class Descriptor extends hudson.model.Descriptor<AliasProvider> {
+
+        @Override
+        public AliasProvider newInstance(final StaplerRequest req, final JSONObject formData) throws FormException {
+
+            return req.bindJSON(clazz, formData);
+        }
     }
 }
