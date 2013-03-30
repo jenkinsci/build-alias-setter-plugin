@@ -31,115 +31,258 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Hudson;
 import hudson.model.PermalinkProjectAction.Permalink;
 import hudson.model.listeners.RunListener;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.DescribableList;
+import hudson.util.FormValidation;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
-import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import org.kohsuke.stapler.DataBoundConstructor;
+
+import net.sf.json.JSONObject;
+
+import org.jenkinsci.plugins.buildaliassetter.AliasProvider.Descriptor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
+ * Set aliases before and after build execution
+ *
  * @author ogondza
  */
 public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable {
 
-    public final String template;
-    
-    @DataBoundConstructor
-    public BuildAliasSetter(String template) {
-        this.template = template;
-    }
-
     @Override
     @SuppressWarnings("rawtypes")
-    public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        
-        setAlias(build, listener);
+    public Environment setUp(
+            final AbstractBuild build, final Launcher launcher, final BuildListener listener
+    ) throws IOException, InterruptedException {
 
-        return new Environment() {};
-    }
-    
-    public MatrixAggregator createAggregator(MatrixBuild build, Launcher launcher, BuildListener listener) {
-        return new MatrixAggregator(build,launcher,listener) {
+        setAliases(build, listener);
+
+        return new Environment() {
+
             @Override
-            public boolean startBuild() throws InterruptedException, IOException {
-                setAlias(build, listener);
-                return super.startBuild();
+            public boolean tearDown(
+                    final AbstractBuild build, final BuildListener listener
+            ) throws IOException, InterruptedException {
+
+                setAliases(build, listener);
+                return super.tearDown(build, listener);
             }
         };
     }
 
-    private void setAlias(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
-        
-        final String name = getName(build, listener);
-        if (name == null) return;
-        
+    public MatrixAggregator createAggregator(
+            final MatrixBuild build, final Launcher launcher, final BuildListener listener
+    ) {
+
+        return new MatrixAggregator(build, launcher, listener) {
+
+            @Override
+            public boolean startBuild() throws InterruptedException, IOException {
+
+                setAliases(build, listener);
+                return super.startBuild();
+            }
+
+            @Override
+            public boolean endBuild() throws InterruptedException, IOException {
+
+                setAliases(build, listener);
+                return super.endBuild();
+            }
+        };
+    }
+
+    private void setAliases(
+            final AbstractBuild<?, ?> build, final BuildListener listener
+    ) throws IOException, InterruptedException {
+
+        final LinkedHashSet<String> aliases = aliases(build, listener);
+
+        if (aliases.isEmpty()) {
+
+            printToConsole(listener, "no build aliases set");
+            return;
+        } else {
+
+            printToConsole(listener, "setting build aliases " + aliases.toString());
+        }
+
         final AbstractProject<?, ?> project = build.getProject();
-        
-        getStorage(project).addAlias(build.getNumber(), name);
-        
+
+        getStorage(project).addAliases(build.getNumber(), aliases);
+
         project.save();
     }
-    
-    private String getName(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
-        
-        final String name = expandMacro(build, listener);
-        if (name == null) return null;
 
-        try {
+    private LinkedHashSet<String> aliases(
+            final AbstractBuild<?, ?> build, final BuildListener listener
+    ) throws IOException, InterruptedException {
 
-            Integer.parseInt(name);
-            logInvalidName(listener, name);
-            return null;
-        } catch (NumberFormatException ex) {/* not an int */}
+        final DescribableList<AliasProvider, Descriptor> providers = getDescriptor().configuredProviders();
 
-        for (final Permalink buildin: Permalink.BUILTIN) {
+        final LinkedHashSet<String> aliases = new LinkedHashSet<String>(providers.size());
+        for(final AliasProvider provider: providers) {
 
-            if (name.equalsIgnoreCase(buildin.getId())) {
-
-                logInvalidName(listener, name);
-                return null;
-            }
+            final List<String> names = provider.names(build, listener);
+            aliases.addAll(names);
         }
 
-        return name;
-    }
-
-    private void logInvalidName(BuildListener listener, String name) {
-
-        listener.getLogger().println(String.format(
-                "BuildAliasSetter: Unable to use '%s' as a custom build alias.",
-                name
-        ));
-    }
-
-    private String expandMacro(AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
-
-        try {
-
-            return TokenMacro.expand(build, listener, template);
-        } catch (MacroEvaluationException e) {
-
-            listener.getLogger().println(e.getMessage());
-        }
-
-        return null;
+        return filterAliases(aliases, listener);
     }
 
     private PermalinkStorage getStorage(final AbstractProject<?, ?> project) throws IOException {
 
         PermalinkStorage storage = project.getProperty(PermalinkStorage.class);
-        if (storage != null) {
+        if (storage == null) {
 
             storage = new PermalinkStorage();
             project.addProperty(storage);
         }
+
         return storage;
+    }
+
+    private LinkedHashSet<String> filterAliases(final LinkedHashSet<String> aliasCandidates, final BuildListener listener) {
+
+        // make sure there is no null
+        aliasCandidates.remove(null);
+
+        final LinkedHashSet<String> aliases = new LinkedHashSet<String>(aliasCandidates.size());
+        for (final String aliasCandidate: aliasCandidates) {
+
+            final FormValidation validation = validateAlias(aliasCandidate);
+            if (validation != null) {
+
+                printToConsole(listener, validation.getMessage());
+                continue;
+            }
+
+            aliases.add(aliasCandidate);
+        }
+
+        return aliases;
+    }
+
+    /**
+     * Validate custom alias
+     *
+     * Aliases that does not conform to this contract will not be attached to the
+     * build. {@link AliasProvider} implementations might use this method from
+     * their doCheckXXX methods to provide early feedback.
+     *
+     * This implementation ensures that an alias can not possibly collide with
+     * the build number (it must not be an integer) and buildin permalink
+     * ("lastBuild", "lastSuccessfulBuild", etc.).
+     *
+     * @return null if valid, {@link FormValidation} describing the cause otherwise.
+     */
+    public static FormValidation validateAlias(final String aliasCandidate) {
+
+        if (aliasCandidate.isEmpty()) return FormValidation.error(
+                "Custom build alias is empty"
+        );
+
+        try {
+
+            Integer.parseInt(aliasCandidate);
+
+            return FormValidation.error(
+                    "Custom build alias '" + aliasCandidate + "' might collide with build number"
+            );
+        } catch (final NumberFormatException ex) {/* not an int */}
+
+        for (final Permalink buildin: Permalink.BUILTIN) {
+
+            if (aliasCandidate.equalsIgnoreCase(buildin.getId())) {
+
+                return FormValidation.error(
+                        "Custom build alias '" + aliasCandidate + "' collide with buildin permalink"
+                );
+            }
+        }
+
+        return null;
+    }
+
+    private void printToConsole(final BuildListener listener, final String message) {
+
+        listener.getLogger().println("BuildAliasSetter: " + message);
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BuildWrapperDescriptor {
+
+        private DescribableList<AliasProvider, AliasProvider.Descriptor> builders;
+
+        public DescriptorImpl() {
+
+            load();
+        }
+
+        @Override
+        public BuildAliasSetter newInstance(
+                final StaplerRequest req, final JSONObject formData
+        ) throws FormException {
+
+            final DescribableList<AliasProvider, Descriptor> newBuilders = emptyProviders();
+            try {
+
+                newBuilders.rebuildHetero(req, formData, providerKinds(), "providers");
+            } catch (final IOException ex) {
+
+                throw new FormException("rebuildHetero failed", ex, "none");
+            }
+
+            builders = newBuilders;
+            save();
+            return new BuildAliasSetter();
+        }
+
+        @Override
+        public boolean isApplicable(final AbstractProject<?, ?> item) {
+
+            return true;
+        }
+
+        @Override
+        public String getDisplayName() {
+
+            return "Set Build Alias";
+        }
+
+        public List<AliasProvider.Descriptor> providerKinds() {
+
+            return Hudson.getInstance().getDescriptorList(AliasProvider.class);
+        }
+
+        public DescribableList<AliasProvider, AliasProvider.Descriptor> configuredProviders() {
+
+            if (builders == null) {
+
+                builders = emptyProviders();
+            }
+
+            return builders;
+        }
+
+        private DescribableList<AliasProvider, AliasProvider.Descriptor> emptyProviders() {
+
+            return new DescribableList<AliasProvider, AliasProvider.Descriptor>(this);
+        }
     }
 
     @Extension
@@ -148,7 +291,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         private final static Logger LOGGER = Logger.getLogger(BuildAliasSetter.class.getName());
 
         /**
-         * Delete aliases for builds that does not longer exists
+         * Delete aliases for builds that are being deleted
          */
         @Override
         public void onDeleted(final AbstractBuild<?, ?> build) {
@@ -162,24 +305,11 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
             try {
 
                 project.save();
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
 
                 final String msg = "Unable to save project after deleting dangling aliases for job " + build.getDisplayName();
                 LOGGER.log(Level.SEVERE, msg, ex);
             }
-        }
-    }
-    
-    @Extension
-    public static class DescriptorImpl extends BuildWrapperDescriptor {
-        @Override
-        public boolean isApplicable(AbstractProject<?, ?> item) {
-            return true;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "Set Build Alias";
         }
     }
 }

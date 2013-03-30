@@ -33,6 +33,7 @@ import hudson.model.PermalinkProjectAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -43,29 +44,44 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * List of {@link Alias}es attached to particular {@link Job}
- * 
+ *
  * @author ogondza
  */
 public class PermalinkStorage extends JobProperty<Job<?,?>> implements PermalinkProjectAction {
-    
-    private final Map<Integer, Alias> permalinks;
-    
+
+    private final Map<Integer, LinkedHashSet<Alias>> permalinks;
+
     @DataBoundConstructor
     public PermalinkStorage() {
 
-        permalinks = new HashMap<Integer, Alias>();
+        permalinks = new HashMap<Integer, LinkedHashSet<Alias>>();
     }
-    
+
     public List<Permalink> getPermalinks() {
-     
+
         final List<Permalink> links = new ArrayList<Permalink>(permalinks.size());
-        links.addAll(permalinks.values());
+        for (final LinkedHashSet<Alias> aliases: permalinks.values()) {
+
+            links.addAll(aliases);
+        }
+
         return links;
     }
-    
-    /*package*/ void addAlias(final int buildNumber, final String name) {
-        
-        permalinks.put(buildNumber, new Alias(buildNumber, name));
+
+    /*package*/ void addAliases(final int buildNumber, final LinkedHashSet<String> aliases) {
+
+        LinkedHashSet<Alias> bucket = permalinks.get(buildNumber);
+        if (bucket == null) {
+            bucket = new LinkedHashSet<Alias>(aliases.size());
+            permalinks.put(buildNumber, bucket);
+        }
+
+        for (final String alias: aliases) {
+
+            final Alias newAlias = new Alias(buildNumber, alias);
+            if (bucket.contains(newAlias)) continue;
+            bucket.add(newAlias);
+        }
     }
 
     /*package*/ void deleteAliases(final AbstractBuild<?, ?> build) {
@@ -86,9 +102,9 @@ public class PermalinkStorage extends JobProperty<Job<?,?>> implements Permalink
     }
 
     @Override
-    public JobProperty<?> reconfigure(StaplerRequest req, JSONObject form) throws FormException {
+    public JobProperty<?> reconfigure(final StaplerRequest req, final JSONObject form) throws FormException {
 
-        // Do not reconfigure
+        // Do not reconfigure - keep same instance
         return this;
     }
 
@@ -97,7 +113,7 @@ public class PermalinkStorage extends JobProperty<Job<?,?>> implements Permalink
 
         @Override
         public String getDisplayName() {
-         
+
             return "Permalink storage";
         }
     }
