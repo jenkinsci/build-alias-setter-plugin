@@ -14,6 +14,7 @@ import hudson.model.AbstractProject;
 import hudson.tasks.BuildWrapper.Environment;
 import hudson.util.DescribableList;
 import org.jenkinsci.plugins.buildaliassetter.AliasProvider.Descriptor;
+import org.jenkinsci.plugins.buildaliassetter.BuildAliasSetter.DanglingAliasDeleter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -46,6 +47,19 @@ public class AliasSettingTest {
         Mockito.doReturn(logger).when(listener).getLogger();
 
         Mockito.doReturn(descriptor).when(setter).getDescriptor();
+    }
+
+    @Test
+    public void deleteAliasesUponBuildDeletion() throws IOException {
+
+        final DanglingAliasDeleter deleter = new BuildAliasSetter.DanglingAliasDeleter();
+
+        deleter.onDeleted(build);
+
+        Mockito.verify(storage).deleteAliases(build);
+        Mockito.verify(project).save();
+
+        Mockito.verifyNoMoreInteractions(storage);
     }
 
     @Test
