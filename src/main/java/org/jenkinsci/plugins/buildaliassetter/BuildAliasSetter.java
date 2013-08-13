@@ -204,7 +204,7 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
                 final StaplerRequest req, final JSONObject formData
         ) throws FormException {
 
-            final DescribableList<AliasProvider, Descriptor> newBuilders = emptyProviders();
+            final DescribableList<AliasProvider, AliasProvider.Descriptor> newBuilders = emptyProviders();
             try {
 
                 newBuilders.rebuildHetero(req, formData, providerKinds(), "providers");
