@@ -2,20 +2,17 @@ package org.jenkinsci.plugins.buildaliassetter;
 
 import hudson.matrix.MatrixBuild;
 import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.tasks.BuildWrapper.Environment;
-import hudson.util.DescribableList;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-import java.util.List;
 
-import org.jenkinsci.plugins.buildaliassetter.AliasProvider.Descriptor;
 import org.jenkinsci.plugins.buildaliassetter.BuildAliasSetter.DanglingAliasDeleter;
+import org.jenkinsci.plugins.buildaliassetter.util.DummyProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -62,7 +59,7 @@ public class AliasSettingTest {
     @Test
     public void setUpAndTearDownShouldAddAliases() throws Exception {
 
-        BuildAliasSetter setter = whenProvidedAliases(
+        BuildAliasSetter setter = DummyProvider.buildWrapper(
                 null, "valid-alias", "42", "lastUnsuccessfulBuild", "", "1.480.3-SNAPSHOT"
         );
 
@@ -72,7 +69,7 @@ public class AliasSettingTest {
 
         // Simulate different aliases provided before and after the build
         setUp();
-        Whitebox.setInternalState(setter, "providers", providers("1.480.3", "valid-alias"));
+        Whitebox.setInternalState(setter, "providers", DummyProvider.describableList("1.480.3", "valid-alias"));
 
         environment.tearDown(build, listener);
 
@@ -82,7 +79,7 @@ public class AliasSettingTest {
     @Test
     public void matrixSetUpShouldAddAliases() throws Exception {
 
-        final BuildAliasSetter setter = whenProvidedAliases(
+        final BuildAliasSetter setter = DummyProvider.buildWrapper(
                 null, "valid-alias", "42", "lastUnsuccessfulBuild", "", "1.480.3-SNAPSHOT"
         );
 
@@ -94,7 +91,7 @@ public class AliasSettingTest {
     @Test
     public void matrixTearDownShouldAddAliases() throws Exception {
 
-        final BuildAliasSetter setter = whenProvidedAliases(
+        final BuildAliasSetter setter = DummyProvider.buildWrapper(
                 null, "valid-alias", "42", "lastUnsuccessfulBuild", "", "1.480.3-SNAPSHOT"
         );
 
@@ -109,29 +106,5 @@ public class AliasSettingTest {
         Mockito.verify(project).save();
 
         Mockito.verifyNoMoreInteractions(storage);
-    }
-
-    private BuildAliasSetter whenProvidedAliases(final String... aliases) throws Exception {
-
-        return new BuildAliasSetter(providers(aliases));
-    }
-
-    private DescribableList<AliasProvider, Descriptor> providers(final String... aliases) {
-
-        return new DescribableList<AliasProvider, AliasProvider.Descriptor>(
-                null, Arrays.asList(aliasProvider(aliases))
-        );
-    }
-
-    private AliasProvider aliasProvider(final String... aliases) {
-
-        return new AliasProvider() {
-
-            @Override
-            public List<String> names(final AbstractBuild<?, ?> build, final BuildListener listener) throws IOException, InterruptedException {
-
-                return Arrays.asList(aliases);
-            }
-        };
     }
 }

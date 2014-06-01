@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import net.sf.json.JSONObject;
 
@@ -59,19 +60,17 @@ public class PermalinkStorage extends JobProperty<Job<?,?>> implements Permalink
 
     public List<Permalink> getPermalinks() {
 
-        final List<Permalink> links = new ArrayList<Permalink>(permalinks.size());
+        final Map<String, Permalink> links = new TreeMap<String, Permalink>();
         for (final Map.Entry<Integer, LinkedHashSet<String>> entry: permalinks.entrySet()) {
 
-            final LinkedHashSet<String> aliases = entry.getValue();
             final int buildNumber = entry.getKey();
-            for (final String alias: aliases) {
+            for (final String alias: entry.getValue()) {
 
-                final Alias newAlias = new Alias(buildNumber, alias);
-                links.add(newAlias);
+                links.put(alias, new Alias(buildNumber, alias));
             }
         }
 
-        return links;
+        return new ArrayList<Permalink>(links.values());
     }
 
     /*package*/ void addAliases(final AbstractBuild<?, ?> build, final LinkedHashSet<String> aliases) {

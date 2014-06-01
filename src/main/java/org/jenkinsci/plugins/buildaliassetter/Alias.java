@@ -24,8 +24,8 @@
 package org.jenkinsci.plugins.buildaliassetter;
 
 import hudson.model.Job;
-import hudson.model.Run;
 import hudson.model.PermalinkProjectAction.Permalink;
+import hudson.model.Run;
 
 /**
  * An Alias for a build
@@ -83,5 +83,10 @@ import hudson.model.PermalinkProjectAction.Permalink;
         final Alias other = (Alias) obj;
 
         return buildNumber == other.buildNumber && name.equals(other.name);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Build alias '%s' for #%d", name, buildNumber);
     }
 }

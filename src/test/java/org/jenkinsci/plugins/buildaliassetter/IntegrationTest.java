@@ -23,10 +23,16 @@
  */
 package org.jenkinsci.plugins.buildaliassetter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import hudson.matrix.MatrixProject;
 import hudson.model.TopLevelItem;
+import hudson.model.FreeStyleProject;
+import hudson.model.PermalinkProjectAction.Permalink;
 
+import java.util.List;
+
+import org.jenkinsci.plugins.buildaliassetter.util.DummyProvider;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Bug;
@@ -45,5 +51,26 @@ public class IntegrationTest {
         MatrixProject dst = (MatrixProject) j.jenkins.copy((TopLevelItem) src, "dst");
 
         assertNull("Permalinks copied with job", dst.getProperty(PermalinkStorage.class));
+    }
+
+    @Test @Bug(20405)
+    public void doNotShowAliasPermalinkTwice() throws Exception {
+        FreeStyleProject p = j.jenkins.createProject(FreeStyleProject.class, "project");
+
+        p.getBuildWrappersList().add(DummyProvider.buildWrapper("duplicated"));
+
+        p.scheduleBuild2(0).get();
+        List<Permalink> aliases = p.getAction(PermalinkStorage.class).getPermalinks();
+        assertEquals(1, aliases.size());
+        assertEquals(new Alias(1, "duplicated"), aliases.get(0));
+
+        p.getBuildWrappersList().remove(BuildAliasSetter.class);
+        p.getBuildWrappersList().add(DummyProvider.buildWrapper("duplicated", "original"));
+
+        p.scheduleBuild2(0).get();
+        aliases = p.getAction(PermalinkStorage.class).getPermalinks();
+        assertEquals(2, aliases.size());
+        assertEquals(new Alias(2, "duplicated"), aliases.get(0));
+        assertEquals(new Alias(2, "original"), aliases.get(1));
     }
 }
