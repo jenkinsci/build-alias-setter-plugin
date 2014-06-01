@@ -29,9 +29,12 @@ import hudson.matrix.MatrixAggregatable;
 import hudson.matrix.MatrixAggregator;
 import hudson.matrix.MatrixBuild;
 import hudson.model.BuildListener;
+import hudson.model.Item;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.Job;
+import hudson.model.listeners.ItemListener;
 import hudson.model.listeners.RunListener;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -62,6 +65,8 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author ogondza
  */
 public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable {
+
+    private final static Logger LOGGER = Logger.getLogger(BuildAliasSetter.class.getName());
 
     private /*final*/ @Nonnull DescribableList<AliasProvider, AliasProvider.Descriptor> providers;
 
@@ -264,10 +269,8 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
     @Extension
     public static class DanglingAliasDeleter extends RunListener<AbstractBuild<?, ?>> {
 
-        private final static Logger LOGGER = Logger.getLogger(BuildAliasSetter.class.getName());
-
         /**
-         * Delete aliases for builds that are being deleted
+         * Delete aliases for builds that are being deleted.
          */
         @Override
         public void onDeleted(final AbstractBuild<?, ?> build) {
@@ -285,6 +288,28 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
 
                 final String msg = "Unable to save project after deleting dangling aliases for job " + build.getDisplayName();
                 LOGGER.log(Level.SEVERE, msg, ex);
+            }
+        }
+    }
+
+    @Extension
+    public static class CopyProjectPermalinksEraser extends ItemListener {
+
+        /**
+         * Erase aliases from newly created projects by copying.
+         */
+        @Override
+        public void onCopied(Item src, Item item) {
+            if (!(item instanceof Job)) return;
+
+            Job<?, ?> job = (Job<?, ?>) item;
+            PermalinkStorage storage = job.getProperty(PermalinkStorage.class);
+            if (storage == null) return;
+
+            try {
+                job.removeProperty(storage);
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to erase aliases when coppying " + item.getFullName(), ex);
             }
         }
     }
