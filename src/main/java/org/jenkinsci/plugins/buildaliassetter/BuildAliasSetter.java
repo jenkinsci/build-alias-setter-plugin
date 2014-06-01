@@ -44,9 +44,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Nonnull;
+
 import net.sf.json.JSONObject;
 
-import org.jenkinsci.plugins.buildaliassetter.AliasProvider.Descriptor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -61,6 +62,16 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author ogondza
  */
 public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable {
+
+    private /*final*/ @Nonnull DescribableList<AliasProvider, AliasProvider.Descriptor> providers;
+
+    public BuildAliasSetter(@Nonnull DescribableList<AliasProvider, AliasProvider.Descriptor> providers) {
+        this.providers = providers;
+    }
+
+    public @Nonnull DescribableList<AliasProvider, AliasProvider.Descriptor> configuredProviders() {
+        return providers;
+    }
 
     @Override
     @SuppressWarnings("rawtypes")
@@ -131,8 +142,6 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
             final AbstractBuild<?, ?> build, final BuildListener listener
     ) throws IOException, InterruptedException {
 
-        final DescribableList<AliasProvider, Descriptor> providers = getDescriptor().configuredProviders();
-
         final LinkedHashSet<String> aliases = new LinkedHashSet<String>(providers.size());
         for(final AliasProvider provider: providers) {
 
@@ -189,14 +198,27 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         return (DescriptorImpl) super.getDescriptor();
     }
 
+    // JENKINS-23264
+    private Object readResolve() {
+        DescriptorImpl d = getDescriptor();
+        if (providers == null) {
+            providers = d.builders;
+        }
+
+        if (providers == null) {
+            providers = d.emptyProviders();
+        }
+
+        return this;
+    }
+
     @Extension
     public static class DescriptorImpl extends BuildWrapperDescriptor {
 
+        @Deprecated // JENKINS-23264
         private DescribableList<AliasProvider, AliasProvider.Descriptor> builders;
-
         public DescriptorImpl() {
-
-            load();
+            load(); // JENKINS-23264
         }
 
         @Override
@@ -204,18 +226,16 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
                 final StaplerRequest req, final JSONObject formData
         ) throws FormException {
 
-            final DescribableList<AliasProvider, AliasProvider.Descriptor> newBuilders = emptyProviders();
+            final DescribableList<AliasProvider, AliasProvider.Descriptor> providers = emptyProviders();
             try {
 
-                newBuilders.rebuildHetero(req, formData, providerKinds(), "providers");
+                providers.rebuildHetero(req, formData, providerKinds(), "providers");
             } catch (final IOException ex) {
 
                 throw new FormException("rebuildHetero failed", ex, "none");
             }
 
-            builders = newBuilders;
-            save();
-            return new BuildAliasSetter();
+            return new BuildAliasSetter(providers);
         }
 
         @Override
@@ -233,16 +253,6 @@ public class BuildAliasSetter extends BuildWrapper implements MatrixAggregatable
         public List<AliasProvider.Descriptor> providerKinds() {
 
             return Hudson.getInstance().getDescriptorList(AliasProvider.class);
-        }
-
-        public DescribableList<AliasProvider, AliasProvider.Descriptor> configuredProviders() {
-
-            if (builders == null) {
-
-                builders = emptyProviders();
-            }
-
-            return builders;
         }
 
         private DescribableList<AliasProvider, AliasProvider.Descriptor> emptyProviders() {
