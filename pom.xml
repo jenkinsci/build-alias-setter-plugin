@@ -8,7 +8,7 @@
 
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>build-alias-setter</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.3</version>
   <packaging>hpi</packaging>
   <name>Build Alias Setter Plugin</name>
   <description>Add cusom build aliases for easier build identification.</description>
