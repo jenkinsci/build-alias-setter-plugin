@@ -25,18 +25,23 @@ package org.jenkinsci.plugins.buildaliassetter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import hudson.matrix.MatrixProject;
-import hudson.model.TopLevelItem;
-import hudson.model.FreeStyleProject;
-import hudson.model.PermalinkProjectAction.Permalink;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jenkinsci.plugins.buildaliassetter.util.DummyProvider;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Bug;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import hudson.matrix.MatrixProject;
+import hudson.model.AbstractProject;
+import hudson.model.Build;
+import hudson.model.FreeStyleProject;
+import hudson.model.Run;
+import hudson.model.TopLevelItem;
+import hudson.model.PermalinkProjectAction.Permalink;
 
 public class IntegrationTest {
 
@@ -72,5 +77,28 @@ public class IntegrationTest {
         assertEquals(2, aliases.size());
         assertEquals(new Alias(2, "duplicated"), aliases.get(0));
         assertEquals(new Alias(2, "original"), aliases.get(1));
+    }
+
+    @Test
+    public void pointToLastBuildWithAlias() throws Exception {
+        String tag = UUID.randomUUID().toString();
+
+        FreeStyleProject p = j.jenkins.createProject(FreeStyleProject.class, "project");
+        p.getBuildWrappersList().add(DummyProvider.buildWrapper(tag));
+
+        for (int i = 1; i < 50; i++) {
+            Build expected = j.buildAndAssertSuccess(p);
+            Run<?, ?> actual = resolve(p, tag);
+            assertEquals(expected.getNumber(), actual.getNumber());
+        }
+    }
+
+    private Run<?, ?> resolve(AbstractProject<?, ?> job, String alias) {
+        for (Permalink p : job.getPermalinks()) {
+            if(p.getId().equals(alias))
+                return p.resolve(job);
+        }
+
+        throw new AssertionError();
     }
 }
