@@ -66,7 +66,8 @@ public class PermalinkStorage extends JobProperty<Job<?,?>> implements Permalink
             final int buildNumber = entry.getKey();
             for (final String alias: entry.getValue()) {
 
-                links.put(alias, new Alias(buildNumber, alias));
+                if(!links.containsKey(alias) || (links.containsKey(alias) && ((Alias)(links.get(alias))).getBuildNumber() < buildNumber ))
+                    links.put(alias, new Alias(buildNumber, alias));
             }
         }
 

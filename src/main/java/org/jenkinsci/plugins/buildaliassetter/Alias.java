@@ -57,6 +57,10 @@ import hudson.model.Run;
         return name;
     }
 
+    public int getBuildNumber() {
+        return buildNumber;
+    }
+    
     @Override
     public String getDisplayName() {
 
