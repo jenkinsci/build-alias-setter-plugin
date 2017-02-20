@@ -11,9 +11,9 @@
   <version>0.5-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Build Alias Setter Plugin</name>
-  <description>Add cusom build aliases for easier build identification.</description>
+  <description>Add custom build aliases for easier build identification.</description>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Build+Alias+Setter+Plugin</url>
-  
+
   <developers>
     <developer>
       <id>olivergondza</id>
@@ -54,7 +54,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  
+
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
@@ -68,7 +68,7 @@
       <url>http://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
-  
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.useFile>false</surefire.useFile>
