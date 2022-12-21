@@ -1,6 +1,6 @@
-/target/
-*.iml
+.classpath
+.project
+.settings/
+target/
 work/
-
-.*
-!.gitignore
+.idea

@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.buildaliassetter.util.DummyProvider;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Bug;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.matrix.MatrixProject;
@@ -47,7 +48,7 @@ public class IntegrationTest {
 
     public @Rule JenkinsRule j = new JenkinsRule();
 
-    @Test @Bug(21734)
+    @Test @Issue("21734")
     public void doNotCopyAliasesWithJob() throws Exception {
         MatrixProject src = j.jenkins.createProject(MatrixProject.class, "src");
         PermalinkStorage storage = new PermalinkStorage();
@@ -58,7 +59,7 @@ public class IntegrationTest {
         assertNull("Permalinks copied with job", dst.getProperty(PermalinkStorage.class));
     }
 
-    @Test @Bug(20405)
+    @Test @Issue("20405")
     public void doNotShowAliasPermalinkTwice() throws Exception {
         FreeStyleProject p = j.jenkins.createProject(FreeStyleProject.class, "project");
 

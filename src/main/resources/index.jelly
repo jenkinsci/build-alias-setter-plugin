@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
-  This plug-in sets an alias to builds for easier identification and <tt>url</tt> access.
+  This plug-in sets an alias to builds for easier identification and <code>url</code> access.
 </div>

@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -72,7 +73,7 @@ public class TokenMacroAliasProvider extends AliasProvider {
     @Override
     public DescriptorImpl getDescriptor() {
 
-        return (DescriptorImpl) Hudson.getInstance().getDescriptorOrDie(TokenMacroAliasProvider.class);
+        return (DescriptorImpl) Jenkins.get().getDescriptorOrDie(TokenMacroAliasProvider.class);
     }
 
     @Extension

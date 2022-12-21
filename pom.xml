@@ -3,29 +3,44 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.466</version>
+    <version>4.53</version>
+    <relativePath />
   </parent>
 
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>build-alias-setter</artifactId>
-  <version>0.5-SNAPSHOT</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Build Alias Setter Plugin</name>
-  <description>Add custom build aliases for easier build identification.</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/Build+Alias+Setter+Plugin</url>
+  <url>https://plugins.jenkins.io/build-alias-setter/</url>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/build-alias-setter-plugin.git</connection>
+    <connection>scm:git:https://github.com/jenkinsci/build-alias-setter-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/build-alias-setter-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/build-alias-setter-plugin</url>
-    <tag>HEAD</tag>
+    <tag>${scmTag}</tag>
   </scm>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-2.361.x</artifactId>
+        <version>1750.v0071fa_4c4a_e3</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>token-macro</artifactId>
-      <version>1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-project</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -62,7 +77,7 @@
   </pluginRepositories>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <surefire.useFile>false</surefire.useFile>
+    <changelist>999999-SNAPSHOT</changelist>
+    <jenkins.version>2.361.4</jenkins.version>
   </properties>
 </project>  
