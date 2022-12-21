@@ -12,7 +12,7 @@
   <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Build Alias Setter Plugin</name>
-  <url>https://plugins.jenkins.io/build-alias-setter/</url>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/Build+Alias+Setter+Plugin</url>
 
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/build-alias-setter-plugin.git</connection>
